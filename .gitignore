@@ -1,9 +1,32 @@
+#sbt
 target/
 project/target/
 project/project/
+
+#scala 3
+.tasty
+# metals
+project/metals.sbt
 .metals/
+#bloop and metals
 .bloop/
 .bsp/
+#coursier
+null/
+#intelij idea
 .idea/
+*.log
+*.iml
+*.ipr
+*.iws
+
+# vs code
 .vscode/
+#java
+*.class
+#mac
 .DS_Store
+#other
+.history
+.scala_dependencies
+.cache-main

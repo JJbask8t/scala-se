@@ -1,34 +1,13 @@
-//---------------------- Vorlesung Beispiel ------------------------------
-
-/* @main def startStockPilot(): Unit =
-  println("Hey, I'm your StockPilot!!!!")
-  println(mesh())
-
-val eol = sys.props("line.separator")
-def bar(cellWidth: Int = 3, cellNum: Int = 3) =
-  ("+" + "-" * cellWidth) * cellNum + "+" + eol
-def cells(cellWidth: Int = 3, cellNum: Int = 3) =
-  ("|" + " " * cellWidth) * cellNum + "|" + eol
-def mesh(cellWidth: Int = 3, cellNum: Int = 3) =
-  (bar(cellWidth, cellNum) + cells(cellWidth, cellNum)) * cellNum + bar(cellWidth, cellNum)
- */
-
-//----------------------------------------------------------------------------
-
 case class Stock(ticker: String, pe: Double, eps: Double) {
 
-  def toLines: List[String] = List(
-    s"Stock ${ticker}",
-    f"P/E = ${pe}%.2f",
-    f"EPS = ${eps}%.4f"
-  )
+  def toLines: List[String] = List(s"Stock ${ticker}", f"P/E = ${pe}%.2f", f"EPS = ${eps}%.4f")
 }
 
 def drawStockRow(stocks: List[Stock], cellWidth: Int): String = {
 
   if (stocks.isEmpty) return "No stocks to print"
 
-  val eol = sys.props("line.separator")
+  val eol     = sys.props("line.separator")
   val builder = new StringBuilder
 
   val topAndBottomBar = ("+" + "-" * cellWidth) * stocks.length + "+" + eol
@@ -63,7 +42,8 @@ def drawStockRow(stocks: List[Stock], cellWidth: Int): String = {
   builder.toString()
 }
 
-@main def startSimpleStockPilot(): Unit = {
+@main
+def startSimpleStockPilot(): Unit = {
   val eol = sys.props("line.separator")
   println(eol + "Hey, I'm your SIMPLE StockPilot!")
 

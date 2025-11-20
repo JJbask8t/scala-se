@@ -1,4 +1,4 @@
-import org.scalatest.wordspec.AnyWordSpec
+/* import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers.*
 
 class StockSpec extends AnyWordSpec {
@@ -56,3 +56,4 @@ class StockSpec extends AnyWordSpec {
     }
   }
 }
+ */

@@ -28,7 +28,11 @@ lazy val root = project
 
     // Библиотеки для тестов
     libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.18",
-    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % "test"
-  )
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % "test",
 
-coverageExcludedPackages := "stockpilot.view.*;stockpilot.app.Main"
+    // --- ИСПРАВЛЕНИЕ ---
+
+    // stockpilot.view.* -> исключает весь UI
+    // stockpilot.app.* -> исключает Main (и сгенерированный Main$package)
+    coverageExcludedPackages := "stockpilot\\.view\\..*;stockpilot\\.app\\..*"
+  )

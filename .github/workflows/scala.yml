@@ -52,5 +52,5 @@ jobs:
         # Явно говорим плагину, какая сейчас ветка (решает NoHeadException)
         CI_BRANCH: ${{ github.ref_name }}
         # Ошибка с отправкой отчета на COVERALLS
-        COVERALLS_SERVICE_NAME: github
+        COVERALLS_SERVICE_NAME: github-actions
       run: sbt coveralls

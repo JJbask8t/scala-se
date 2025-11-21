@@ -17,7 +17,7 @@ lazy val root = project
  */
 
 // стабильнуя LTS версию, чтобы точно найти все плагины
-val scala3Version = "3.3.3"
+val scala3Version = "3.7.3"
 
 lazy val root = project
   .in(file("."))

@@ -10,18 +10,13 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Работаем в папке проекта
     defaults:
       run:
         working-directory: ./starttemplate
 
     steps:
-    # 1. Скачиваем историю (fetch-depth: 0 важно для Coveralls)
     - uses: actions/checkout@v3
-      with:
-        fetch-depth: 0
 
-    # 2. Настройка окружения
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
@@ -32,21 +27,17 @@ jobs:
     - name: Setup sbt
       uses: sbt/setup-sbt@v1
 
-    # 3. Подготовка папки .git (критично для твоего вложенного проекта)
-    - name: Fix Git location
-      run: cp -r ../.git .
+    # Шаг 1: Запускаем тесты и ГЕНЕРИРУЕМ отчет (без отправки)
+    - name: Run Tests and Generate Report
+      run: sbt clean coverage test coverageReport
 
-    # 4. Сборка, Тесты и Отправка (Адаптировано из PDF, слайд 28)
-    - name: Build, Test and Upload Coverage
-      env:
-        COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        # GitHub токен нужен для внутренней авторизации запросов
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: |
-        # Метод из PDF: Явно экспортируем ветку
-        export CI_BRANCH="${GITHUB_REF#refs/heads/}"
-
-        # Запускаем всё одной командой.
-        # ВАЖНО: -Dcoveralls.serviceName=github-actions жестко передает имя сервиса в Java процесс.
-        # Это решает проблему "missing service_name" раз и навсегда.
-        sbt -Dcoveralls.serviceName=github-actions clean coverage test coverageReport coveralls
+    # Шаг 2: ОТПРАВЛЯЕМ отчет через официальный Action
+    # Он сам найдет нужный токен и определит сервис
+    - name: Upload coverage to Coveralls
+      uses: coverallsapp/github-action@v2
+      with:
+        # Для этого экшена нужен GITHUB_TOKEN (он встроенный, ничего настраивать не надо)
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        # Путь к отчету, который сгенерировал sbt (в формате Cobertura)
+        file: starttemplate/target/scala-3.3.6/coverage-report/cobertura.xml
+        format: cobertura

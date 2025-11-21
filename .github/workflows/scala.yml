@@ -10,13 +10,12 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Мы работаем внутри папки starttemplate
     defaults:
       run:
         working-directory: ./starttemplate
 
     steps:
-    # 1. Скачиваем полную историю (fetch-depth: 0)
+    # 1. Скачиваем полную историю (это мы уже выяснили, это нужно)
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
@@ -33,24 +32,31 @@ jobs:
     - name: Setup sbt
       uses: sbt/setup-sbt@v1
 
-    # 4. Запускаем тесты
-    - name: Run Tests with Coverage
-      run: sbt clean coverage test
+    # 4. Запускаем тесты и генерируем отчет
+    - name: Run Tests and Coverage
+      run: sbt clean coverage test coverageReport
 
-    # 5. Генерируем отчет
-    - name: Generate Coverage Report
-      run: sbt coverageReport
-
-    # 6. (ВАЖНО) Копируем .git в текущую папку, чтобы плагин его нашел
+    # 5. Хак с папкой .git (обязательно оставляем)
     - name: Fix Git location for Coveralls
       run: cp -r ../.git .
 
-    # 7. Отправляем отчет с явным указанием ветки
+    # 6. ФИНАЛЬНЫЙ ШАГ: Отправка с полным набором переменных
     - name: Upload to Coveralls
       env:
+        # Твой секретный токен
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
-        # Явно говорим плагину, какая сейчас ветка (решает NoHeadException)
+
+        # Токен самого GitHub (важно для верификации работы Action)
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+        # Явное указание ветки
         CI_BRANCH: ${{ github.ref_name }}
-        # Ошибка с отправкой отчета на COVERALLS
+
+        # Мы задаем ВСЕ возможные варианты имени сервиса, чтобы плагин точно нашел один из них
+        CI_NAME: github-actions
         COVERALLS_SERVICE_NAME: github-actions
+
+      # Мы используем sbt coveralls, так как это Scala-плагин.
+      # Официальный GitHub Action (из твоей ссылки) требует конвертации XML в LCOV,
+      # что сложнее настроить, чем просто заставить этот плагин работать.
       run: sbt coveralls

@@ -16,8 +16,8 @@ lazy val root = project
   )
  */
 
-// стабильнуя LTS версию, чтобы точно найти все плагины
-val scala3Version = "3.7.3"
+// Используем 3.3.6, чтобы Metals был доволен (это LTS версия)
+val scala3Version = "3.3.6"
 
 lazy val root = project
   .in(file("."))
@@ -26,7 +26,7 @@ lazy val root = project
     version := "0.1.0-SNAPSHOT",
     scalaVersion := scala3Version,
 
-    // Включаем ScalaTest (нужен для файлов *Spec.scala)
+    // Библиотеки для тестов
     libraryDependencies += "org.scalactic" %% "scalactic" % "3.2.18",
     libraryDependencies += "org.scalatest" %% "scalatest" % "3.2.18" % "test"
   )

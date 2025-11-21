@@ -10,17 +10,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    # Эта настройка важна, так как проект лежит в подпапке starttemplate
+    # Мы работаем внутри папки starttemplate
     defaults:
       run:
         working-directory: ./starttemplate
 
     steps:
+    # 1. Скачиваем полную историю (fetch-depth: 0)
     - uses: actions/checkout@v3
       with:
         fetch-depth: 0
 
-    # Шаг 1: Ставим Java
+    # 2. Ставим Java
     - name: Set up JDK 17
       uses: actions/setup-java@v3
       with:
@@ -28,20 +29,26 @@ jobs:
         distribution: 'temurin'
         cache: 'sbt'
 
-    # Шаг 2 (НОВЫЙ): Явно устанавливаем sbt
+    # 3. Ставим sbt
     - name: Setup sbt
       uses: sbt/setup-sbt@v1
 
-    # Шаг 3: Запускаем тесты
+    # 4. Запускаем тесты
     - name: Run Tests with Coverage
       run: sbt clean coverage test
 
-    # Шаг 4: Генерируем отчет для Coveralls
+    # 5. Генерируем отчет
     - name: Generate Coverage Report
       run: sbt coverageReport
 
-    # Шаг 5: Отправляем отчет
+    # 6. (ВАЖНО) Копируем .git в текущую папку, чтобы плагин его нашел
+    - name: Fix Git location for Coveralls
+      run: cp -r ../.git .
+
+    # 7. Отправляем отчет с явным указанием ветки
     - name: Upload to Coveralls
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.COVERALLS_REPO_TOKEN }}
+        # Явно говорим плагину, какая сейчас ветка (решает NoHeadException)
+        CI_BRANCH: ${{ github.ref_name }}
       run: sbt coveralls

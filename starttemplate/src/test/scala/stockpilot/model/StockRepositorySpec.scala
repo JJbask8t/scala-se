@@ -87,6 +87,17 @@ class StockRepositorySpec extends AnyWordSpec with Matchers {
         val repo = new StockRepository(List(s1, s2))
         repo.findByPrice(1000.0, 2000.0) shouldBe empty
       }
+
+      // ----------> NEW PATTERN TEST (ITERATOR) ---
+      "used as an Iterator" should {
+        "allow iterating over stocks directly" in {
+          val repo = new StockRepository(List(s1, s2))
+          // Verify that the repository behaves as a collection
+          repo.toList.length shouldBe 2
+          repo.map(_.ticker).toList.sorted shouldBe List("AAPL", "GOOG")
+        }
+      }
+
     }
   }
 }

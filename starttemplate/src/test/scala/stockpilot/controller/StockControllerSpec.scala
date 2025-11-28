@@ -2,81 +2,115 @@ package stockpilot.controller
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
-import stockpilot.model.{Stock, StockRepository}
+//to avoid name conflicts within the controller package:
+import _root_.stockpilot.model._
 
 class StockControllerSpec extends AnyWordSpec with Matchers {
 
-  val s1 = Stock("AAPL", 28.5, 5.51, 420.33)
-  val s2 = Stock("GOOG", 12.01, 0.3, 98.01)
+  // Вспомогательные данные
+  val sA = Stock("AAPL", 10.0, 1.0, 100.0) // Price 100
+  val sB = Stock("GOOG", 10.0, 1.0, 10.0) // Prise 10
+  val sC = Stock("MSFT", 15.0, 2.0, 50.0) // price 50
 
   "StockController" should {
-    "return all stocks sorted by ticker" in {
-      val repo = new StockRepository(List(s2, s1))
+
+    // --- TESTS OF NEW PATTERNS (FACTORY) ---
+    "add valid stocks via Factory method (String input)" in {
+      val repo = new StockRepository(Nil)
       val controller = new StockController(repo)
+      val res = controller.addStockFromInput("MSFT", "25.5", "1.2", "300.50")
+      res shouldBe true
+      controller.exists("MSFT") shouldBe true
+    }
+
+    "reject invalid stocks via Factory method" in {
+      val repo = new StockRepository(Nil)
+      val controller = new StockController(repo)
+      val res = controller.addStockFromInput("BAD", "25.5", "1.2", "not-a-number")
+      res shouldBe false
+      controller.exists("BAD") shouldBe false
+    }
+
+    // --- TESTS OF NEW PATTERNS (STRATEGY) ---
+    "switch sort strategies correctly" in {
+      val repo = new StockRepository(List(sA, sB))
+      val controller = new StockController(repo)
+
+      // 1. By default (SortByTicker)
+      controller.setSortStrategy(SortByTicker)
+      controller.allStocks.map(_.ticker) shouldBe List("AAPL", "GOOG")
+
+      // 2. By price (Asc)
+      controller.setSortStrategy(SortByPriceAsc)
+      controller.allStocks.map(_.ticker) shouldBe List("GOOG", "AAPL")
+
+      // 3. By pric (Desc)
+      controller.setSortStrategy(SortByPriceDesc)
       controller.allStocks.map(_.ticker) shouldBe List("AAPL", "GOOG")
     }
 
-    "delegate addStock to repository and return false for duplicates" in {
-      val repo = new StockRepository(List(s1))
+    "notify observers when strategy changes" in {
+      val repo = new StockRepository(Nil)
       val controller = new StockController(repo)
-      controller.addStock("aapl", 1.0, 0.1, 1.0) shouldBe false
-      controller.addStock("MSFT", 10.0, 1.0, 50.0) shouldBe true
-      controller.allStocks.map(_.ticker) should contain("MSFT")
+      var notified = false
+      val observer = new Observer {
+        def update(): Unit = notified = true
+      }
+      controller.addObserver(observer)
+      controller.setSortStrategy(SortByPriceAsc)
+      notified shouldBe true
     }
 
-    "getStock and exists behave as expected" in {
-      val repo = new StockRepository(List(s1))
+    // --- BASIC FUNCTION TESTS (CRUD) ---
+
+    "check if stock exists" in {
+      val repo = new StockRepository(List(sA))
       val controller = new StockController(repo)
       controller.exists("AAPL") shouldBe true
-      controller.getStock("aapl").isDefined shouldBe true
-      controller.getStock("nope").isEmpty shouldBe true
+      controller.exists("NONEXISTENT") shouldBe false
     }
 
-    "deleteStock removes stocks and returns correct booleans" in {
-      val repo = new StockRepository(List(s1, s2))
+    "get stock by ticker" in {
+      val repo = new StockRepository(List(sA))
       val controller = new StockController(repo)
+      controller.getStock("AAPL") shouldBe Some(sA)
+      controller.getStock("UNKNOWN") shouldBe None
+    }
+
+    "delete stock and notify observers" in {
+      val repo = new StockRepository(List(sA))
+      val controller = new StockController(repo)
+
+      var notifications = 0
+      controller.addObserver(new Observer {
+        def update(): Unit = notifications += 1
+      })
+
+      // Delete existing
       controller.deleteStock("AAPL") shouldBe true
-      controller.exists("AAPL") shouldBe false
+      repo.exists("AAPL") shouldBe false
+      notifications shouldBe 1
+
+      // Delete non-existent (should not notify)
       controller.deleteStock("AAPL") shouldBe false
+      notifications shouldBe 1
     }
 
-    "filterByPrice returns inclusive range and sorts by ticker" in {
-      val repo = new StockRepository(
-        List(
-          Stock("LOW", 1.0, 0.1, 10.0),
-          Stock("MID", 2.0, 0.2, 50.0),
-          Stock("HIGH", 3.0, 0.3, 100.0)
-        )
-      )
-      val controller = new StockController(repo)
-      val res = controller.filterByPrice(10.0, 50.0)
-      res.map(_.ticker).sorted shouldBe List("LOW", "MID")
-    }
-
-    "notify registered observers on add and delete" in {
-      val repo = new StockRepository(List(s1))
+    "filter by price and respect current sort strategy" in {
+      // List: GOOG(10), MSFT(50), AAPL(100)
+      val repo = new StockRepository(List(sA, sB, sC))
       val controller = new StockController(repo)
 
-      // simple test observer to check notification
-      class TestObserver extends Observer {
-        var called = 0
-        def update(): Unit = { called += 1 }
-      }
+      // Filter 0-60 should return GOOG and MSFT
+      // Default strategy (Ticker): GOOG, MSFT
+      val res1 = controller.filterByPrice(0, 60)
+      res1.map(_.ticker) shouldBe List("GOOG", "MSFT")
 
-      val obs = new TestObserver
-      controller.addObserver(obs)
-
-      // add new stock -> should notify once
-      controller.addStock("MSFT", 10.0, 1.0, 50.0) shouldBe true
-      obs.called shouldBe 1
-
-      // delete existing -> should notify again
-      controller.deleteStock("MSFT") shouldBe true
-      obs.called shouldBe 2
-
-      // delete non-existing -> no notification (delete returns false)
-      controller.deleteStock("NOPE") shouldBe false
-      obs.called shouldBe 2
+      // Change strategy to PriceDesc (expensive at the top)
+      // Filter 0-60. Should return MSFT(50), GOOG(10)
+      controller.setSortStrategy(SortByPriceDesc)
+      val res2 = controller.filterByPrice(0, 60)
+      res2.map(_.ticker) shouldBe List("MSFT", "GOOG")
     }
   }
 }

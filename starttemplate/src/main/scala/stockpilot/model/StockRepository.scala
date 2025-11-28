@@ -2,7 +2,10 @@ package stockpilot.model
 
 //---=== All states are here (Model layer) ===---
 
-class StockRepository(initial: List[Stock]) {
+// -----------> PATTERN ITERATOR ---
+// make the repository iterable by inheriting from Iterable[Stock]
+// directly use for-loops and collection methods
+class StockRepository(initial: List[Stock]) extends Iterable[Stock] {
 
   // Internal map: uppercase ticker -> Stock
   private var stocks: Map[String, Stock] =
@@ -12,6 +15,10 @@ class StockRepository(initial: List[Stock]) {
 
   private def normalizeTicker(t: String): String =
     t.toUpperCase
+
+  // -----------> Implementation of the iterator method (Iterable requirement)
+  override def iterator: Iterator[Stock] =
+    stocks.values.iterator
 
   // Return all stocks (unsorted)
   def all: List[Stock] =

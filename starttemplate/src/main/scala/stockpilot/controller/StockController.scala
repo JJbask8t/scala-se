@@ -1,6 +1,6 @@
 package stockpilot.controller
 
-import stockpilot.model.{Stock, StockRepository}
+import stockpilot.model._
 
 // Controller layer: business logic (managing stocks)
 //Connects to the Model (StockRepository), but not the View
@@ -8,34 +8,52 @@ import stockpilot.model.{Stock, StockRepository}
 
 class StockController(repo: StockRepository) extends Observable {
 
-  // All stocks, sorted by ticker (for printing)
-  def allStocks: List[Stock] =
-    repo.all.sortBy(_.ticker)
+  // keep the current sorting strategy, by default = by ticker
+  private var sortStrategy: StockSortStrategy = SortByTicker
 
-  // Add stock: true - if added, false - ticker already exists
-  def addStock(ticker: String, pe: Double, eps: Double, price: Double): Boolean = {
+  // Method for changing strategy
+  def setSortStrategy(strategy: StockSortStrategy): Unit = {
+    sortStrategy = strategy
+    notifyObservers() // notify View that the order has changed
+  }
+
+  // use a strategy to sort the list
+  def allStocks: List[Stock] =
+    sortStrategy.sort(repo.all)
+
+  // Accepts strings rather than ready-made Doubles, delegating parsing to the Factory
+  def addStockFromInput(ticker: String, pe: String, eps: String, price: String): Boolean = {
+    // Используем Factory Method для создания [cite: 531]
+    StockFactory.createStock(ticker, pe, eps, price) match {
+      case Some(stock) =>
+        val added = repo.add(stock)
+        if (added) notifyObservers()
+        added
+      case None =>
+        false // Data validation error
+    }
+  }
+
+  // Old method (current is addStockFromInput)
+
+  /* def addStock(ticker: String, pe: Double, eps: Double, price: Double): Boolean = {
     val stock = Stock(ticker.toUpperCase, pe, eps, price)
     val added = repo.add(stock)
     if (added) notifyObservers()
     added
-  }
+  } */
 
-  // Get stock by ticker
-  def getStock(ticker: String): Option[Stock] =
-    repo.get(ticker)
+  def getStock(ticker: String): Option[Stock] = repo.get(ticker)
 
-  // Delete stock by ticker: true - if deleted
   def deleteStock(ticker: String): Boolean = {
     val deleted = repo.delete(ticker)
     if (deleted) notifyObservers()
     deleted
   }
 
-  // Filter stocks by price interval [min, max]
   def filterByPrice(min: Double, max: Double): List[Stock] =
-    repo.findByPrice(min, max).sortBy(_.ticker)
+    // Here: also apply the sorting strategy to the filtered list
+    sortStrategy.sort(repo.findByPrice(min, max))
 
-  // Check if ticker exists
-  def exists(ticker: String): Boolean =
-    repo.exists(ticker)
+  def exists(ticker: String): Boolean = repo.exists(ticker)
 }

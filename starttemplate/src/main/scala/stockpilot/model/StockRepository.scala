@@ -54,7 +54,9 @@ class StockRepository(initial: List[Stock]) extends Iterable[Stock] {
     }
   }
 
+  // dont need => Iterator!
+  /*
   // Find all stocks whose price is in [min, max]
   def findByPrice(min: Double, max: Double): List[Stock] =
-    stocks.values.filter(s => s.price >= min && s.price <= max).toList
+    stocks.values.filter(s => s.price >= min && s.price <= max).toList */
 }

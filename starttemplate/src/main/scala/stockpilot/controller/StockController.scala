@@ -51,9 +51,16 @@ class StockController(repo: StockRepository) extends Observable {
     deleted
   }
 
-  def filterByPrice(min: Double, max: Double): List[Stock] =
+  /* def filterByPrice(min: Double, max: Double): List[Stock] =
     // Here: also apply the sorting strategy to the filtered list
-    sortStrategy.sort(repo.findByPrice(min, max))
+    sortStrategy.sort(repo.findByPrice(min, max)) */
+
+  // use Iterator/Iterable:
+  // treat ‘repo’ like a List, calling the .filter method directly.
+  def filterByPrice(min: Double, max: Double): List[Stock] = {
+    val filtered = repo.filter(s => s.price >= min && s.price <= max).toList
+    sortStrategy.sort(filtered)
+  }
 
   def exists(ticker: String): Boolean = repo.exists(ticker)
 }

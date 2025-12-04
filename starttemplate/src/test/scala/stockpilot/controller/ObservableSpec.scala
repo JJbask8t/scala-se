@@ -7,12 +7,12 @@ import org.scalatest.matchers.should.Matchers
 
 class ObservableSpec extends AnyWordSpec with Matchers {
 
-  // Простой класс для тестирования трейта Observable
+  // class for testing the Observable trait
   class TestSubject extends Observable {
     def trigger(): Unit = notifyObservers()
     def getObserversCount: Int = {
-      // reflection или просто тест поведения,
-      // но для coverage достаточно проверить, что remove работает
+      // reflection or just a behavior test,
+      // but for coverage, it is enough to check that remove works
       0
     }
   }
@@ -31,7 +31,7 @@ class ObservableSpec extends AnyWordSpec with Matchers {
 
       subject.removeObserver(obs)
       subject.trigger()
-      callCount shouldBe 1 // Не должно увеличиться, так как удалили
+      callCount shouldBe 1 // It should not increase, as it has been deleted.
     }
   }
 }

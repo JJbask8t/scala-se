@@ -6,7 +6,7 @@ import stockpilot.model._
 //Connects to the Model (StockRepository), but not the View
 //View can call that all
 
-class StockController(repo: StockRepository) extends Observable {
+class StockController(repo: IStockRepository) extends Observable {
 
   // keep the current sorting strategy, by default = by ticker
   private var sortStrategy: StockSortStrategy = SortByTicker
@@ -18,21 +18,18 @@ class StockController(repo: StockRepository) extends Observable {
   }
 
   // use a strategy to sort the list
-  def allStocks: List[Stock] =
-    sortStrategy.sort(repo.all)
+  def allStocks: List[Stock] = sortStrategy.sort(repo.all)
 
   // Accepts strings rather than ready-made Doubles, delegating parsing to the Factory
-  def addStockFromInput(ticker: String, pe: String, eps: String, price: String): Boolean = {
+  def addStockFromInput(ticker: String, pe: String, eps: String, price: String): Boolean =
     // Используем Factory Method для создания [cite: 531]
     StockFactory.createStock(ticker, pe, eps, price) match {
       case Some(stock) =>
         val added = repo.add(stock)
         if (added) notifyObservers()
         added
-      case None =>
-        false // Data validation error
+      case None        => false // Data validation error
     }
-  }
 
   // Old method (current is addStockFromInput)
 

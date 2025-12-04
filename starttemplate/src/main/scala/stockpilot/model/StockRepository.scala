@@ -2,42 +2,43 @@ package stockpilot.model
 
 //---=== All states are here (Model layer) ===---
 
+// Interface
+trait IStockRepository extends Iterable[Stock] {
+  def all: List[Stock]
+  def exists(ticker: String): Boolean
+  def get(ticker: String): Option[Stock]
+  def add(stock: Stock): Boolean
+  def delete(ticker: String): Boolean
+}
+
 // -----------> PATTERN ITERATOR ---
 // make the repository iterable by inheriting from Iterable[Stock]
 // directly use for-loops and collection methods
-class StockRepository(initial: List[Stock]) extends Iterable[Stock] {
+class StockRepository(initial: List[Stock]) extends IStockRepository {
 
   // Internal map: uppercase ticker -> Stock
-  private var stocks: Map[String, Stock] =
-    initial
-      .map(s => normalizeTicker(s.ticker) -> s.copy(ticker = normalizeTicker(s.ticker)))
-      .toMap
+  private var stocks: Map[String, Stock] = initial
+    .map(s => normalizeTicker(s.ticker) -> s.copy(ticker = normalizeTicker(s.ticker))).toMap
 
-  private def normalizeTicker(t: String): String =
-    t.toUpperCase
+  private def normalizeTicker(t: String): String = t.toUpperCase
 
   // -----------> Implementation of the iterator method (Iterable requirement)
-  override def iterator: Iterator[Stock] =
-    stocks.values.iterator
+  override def iterator: Iterator[Stock] = stocks.values.iterator
 
   // Return all stocks (unsorted)
-  def all: List[Stock] =
-    stocks.values.toList
+  def all: List[Stock] = stocks.values.toList
 
   // Check if ticker exists
-  def exists(ticker: String): Boolean =
-    stocks.contains(normalizeTicker(ticker))
+  def exists(ticker: String): Boolean = stocks.contains(normalizeTicker(ticker))
 
   // Get stock by ticker
-  def get(ticker: String): Option[Stock] =
-    stocks.get(normalizeTicker(ticker))
+  def get(ticker: String): Option[Stock] = stocks.get(normalizeTicker(ticker))
 
   // Add stock if ticker is not present: true - if added, false - ticker existed
   def add(stock: Stock): Boolean = {
     val key = normalizeTicker(stock.ticker)
-    if (stocks.contains(key)) {
-      false
-    } else {
+    if (stocks.contains(key)) { false }
+    else {
       stocks = stocks.updated(key, stock.copy(ticker = key))
       true
     }
@@ -49,9 +50,7 @@ class StockRepository(initial: List[Stock]) extends Iterable[Stock] {
     if (stocks.contains(key)) {
       stocks -= key
       true
-    } else {
-      false
-    }
+    } else { false }
   }
 
   // dont need => Iterator!

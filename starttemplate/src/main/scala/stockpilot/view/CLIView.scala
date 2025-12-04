@@ -2,6 +2,7 @@ package stockpilot.view
 
 import scala.io.StdIn.readLine
 import stockpilot.controller.{StockController, Observer}
+import stockpilot.model.Stock
 
 // remove CLIViewHelpers.toDouble and other parsers,
 // now StockFactory handles parsing inside the Controller
@@ -14,13 +15,12 @@ object CLIViewHelpers {
   // for rounding during OUTPUT (filtering)
   def toDouble(s: String): Option[Double] = scala.util.Try(s.toDouble).toOption
 
-  def round2(d: Double): Double =
-    BigDecimal(d).setScale(2, RoundingMode.HALF_UP).toDouble
+  def round2(d: Double): Double = BigDecimal(d).setScale(2, RoundingMode.HALF_UP).toDouble
 
   def drawStockRow(stocks: List[Stock], cellWidth: Int): String = {
     if (stocks.isEmpty) return "No stocks to print"
-    val eol = sys.props("line.separator")
-    val builder = new StringBuilder
+    val eol             = sys.props("line.separator")
+    val builder         = new StringBuilder
     val topAndBottomBar = ("+" + "-" * cellWidth) * stocks.length + "+" + eol
     builder.append(topAndBottomBar)
     for (lineIdx <- 0 until 4) {
@@ -36,7 +36,7 @@ object CLIViewHelpers {
   }
 }
 
-class CLIView(controller: StockController) extends Observer {
+/*class CLIView(controller: StockController) extends Observer {
   private val cellWidth = 20
 
   def run(): Unit = mainLoop()
@@ -141,4 +141,41 @@ class CLIView(controller: StockController) extends Observer {
     }
     s
   }
+}
+ */
+
+class CLIView(controller: StockController) extends Observer {
+
+  // Command initialization (Command Pattern)
+  private val commands: Map[String, Command] = Map(
+    "1" -> new AddStockCommand(controller),
+    "2" -> new ShowAllCommand(controller),
+    "3" -> new FilterStockCommand(controller), // Вернули фильтр
+    "4" -> new DeleteStockCommand(controller),
+    "5" -> new ChangeStrategyCommand(controller)
+  )
+
+  def run(): Unit = {
+    var continue = true
+    while (continue) {
+      println("\n=== Menu ===")
+      // Dynamic menu generation from a list of commands
+      commands.toList.sortBy(_._1).foreach { case (key, cmd) =>
+        println(s"$key) ${cmd.description}")
+      }
+      println("6) Exit")
+
+      val choice = readLine("Choice: ").trim
+      if (choice == "6") continue = false
+      else {
+        commands.get(choice) match {
+          case Some(cmd) => cmd.execute() // Polymorphic call to execute()
+          case None      => println("Unknown command")
+        }
+      }
+    }
+    print("Bye!\n")
+  }
+
+  override def update(): Unit = {}
 }

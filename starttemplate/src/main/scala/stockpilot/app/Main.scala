@@ -3,8 +3,10 @@ package stockpilot.app
 import stockpilot.model.{Stock, StockRepository}
 import stockpilot.controller.StockController
 import stockpilot.view.CLIView
+import stockpilot.model.LoggingRepository
 
-@main def main(): Unit = {
+@main
+def main(): Unit = {
   // Initial stocks – same data as before
   val initialStocks = List(
     Stock("RR.L", 16.64, 0.6852, 798.99),
@@ -14,9 +16,9 @@ import stockpilot.view.CLIView
   )
 
   // Build MVC
-  val repo = new StockRepository(initialStocks)
+  val repo       = new LoggingRepository(new StockRepository(initialStocks)) // Оборачиваем в декоратор
   val controller = new StockController(repo)
-  val view = new CLIView(controller)
+  val view       = new CLIView(controller)
 
   // Register view as observer of controller
   controller.addObserver(view)

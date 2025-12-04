@@ -5,8 +5,8 @@ import org.scalatest.matchers.should.Matchers
 
 class StrategySpec extends AnyWordSpec with Matchers {
   val s1 = Stock("A", 10.0, 1.0, 100.0) // Exepnsive
-  val s2 = Stock("B", 10.0, 1.0, 10.0) // Cheap
-  val s3 = Stock("C", 10.0, 1.0, 50.0) // Middle
+  val s2 = Stock("B", 10.0, 1.0, 10.0)  // Cheap
+  val s3 = Stock("C", 10.0, 1.0, 50.0)  // Middle
 
   val list = List(s3, s1, s2)
 
@@ -19,6 +19,12 @@ class StrategySpec extends AnyWordSpec with Matchers {
   "SortByPriceAsc" should {
     "sort stocks by price ascending" in {
       SortByPriceAsc.sort(list) shouldBe List(s2, s3, s1) // 10, 50, 100
+    }
+  }
+
+  "SortByPriceDesc" should {
+    "sort stocks by price descending" in {
+      SortByPriceDesc.sort(list) shouldBe List(s1, s3, s2) // 100, 50, 10
     }
   }
 }

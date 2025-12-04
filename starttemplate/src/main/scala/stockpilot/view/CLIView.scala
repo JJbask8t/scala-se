@@ -152,7 +152,8 @@ class CLIView(controller: StockController) extends Observer {
     "2" -> new ShowAllCommand(controller),
     "3" -> new FilterStockCommand(controller), // Вернули фильтр
     "4" -> new DeleteStockCommand(controller),
-    "5" -> new ChangeStrategyCommand(controller)
+    "5" -> new ChangeStrategyCommand(controller),
+    "6" -> new UndoCommand(controller)         // ! new
   )
 
   def run(): Unit = {
@@ -163,10 +164,10 @@ class CLIView(controller: StockController) extends Observer {
       commands.toList.sortBy(_._1).foreach { case (key, cmd) =>
         println(s"$key) ${cmd.description}")
       }
-      println("6) Exit")
+      println("7) Exit")
 
       val choice = readLine("Choice: ").trim
-      if (choice == "6") continue = false
+      if (choice == "7") continue = false
       else {
         commands.get(choice) match {
           case Some(cmd) => cmd.execute() // Polymorphic call to execute()

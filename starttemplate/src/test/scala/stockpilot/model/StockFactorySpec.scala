@@ -2,22 +2,25 @@ package stockpilot.model
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+import scala.util.{Success, Failure}
 
 class StockFactorySpec extends AnyWordSpec with Matchers {
   "StockFactory" should {
-    "create a valid Stock from valid strings" in {
+    "return Success with valid Stock for valid inputs" in {
       val s = StockFactory.createStock("aapl", "10.5", "1.2", "150.0")
-      s should be(defined)
+      s shouldBe a[Success[_]]
       s.get.ticker shouldBe "AAPL"
-      s.get.price shouldBe 150.0
     }
 
-    "return None if numbers are invalid" in {
-      StockFactory.createStock("aapl", "invalid", "1.2", "150.0") shouldBe None
+    "return Failure for invalid numbers" in {
+      val s = StockFactory.createStock("aapl", "invalid", "1.2", "150.0")
+      s shouldBe a[Failure[_]]
+      s.failed.get.getMessage should include("valid number")
     }
 
-    "return None if ticker is empty" in {
-      StockFactory.createStock("", "10.5", "1.2", "150.0") shouldBe None
+    "return Failure for empty ticker" in {
+      val s = StockFactory.createStock("", "10.5", "1.2", "150.0")
+      s shouldBe a[Failure[_]]
     }
   }
 }

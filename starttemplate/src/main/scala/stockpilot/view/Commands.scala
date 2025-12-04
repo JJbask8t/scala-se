@@ -1,8 +1,9 @@
 package stockpilot.view
 
-import stockpilot.controller.StockController
-import stockpilot.model.{SortByTicker, SortByPriceAsc, SortByPriceDesc}
 import scala.io.StdIn.readLine
+import scala.util.{Success, Failure}
+import stockpilot.model.{SortByTicker, SortByPriceAsc, SortByPriceDesc}
+import stockpilot.controller.StockController
 
 // Command interface
 trait Command {
@@ -18,13 +19,18 @@ class AddStockCommand(controller: StockController) extends Command {
     val p  = readLine("P/E: ")
     val e  = readLine("EPS: ")
     val pr = readLine("Price: ")
-    if (controller.addStockFromInput(t, p, e, pr)) println(s"Added $t.")
-    else println(s"Error adding $t.")
+
+    /*if (controller.addStockFromInput(t, p, e, pr)) println(s"Added $t.")
+    else println(s"Error adding $t.")*/
+    // ! Handling the Try Monad from controller
+    controller.addStockFromInput(t, p, e, pr) match {
+      case Success(_)  => println(s"Successfully added $t.")
+      case Failure(ex) => println(s"Error: ${ex.getMessage}")
+    }
   }
 }
-
 // Command: Show all
-class ShowAllCommand(controller: StockController) extends Command {
+class ShowAllCommand(controller: StockController)  extends Command {
   def description: String = "Show all stocks"
   def execute(): Unit     = {
     val grid = CLIViewHelpers.drawStockRow(controller.allStocks, 20)
@@ -41,7 +47,7 @@ class FilterStockCommand(controller: StockController) extends Command {
     if (parts.length == 2) {
       (CLIViewHelpers.toDouble(parts(0)), CLIViewHelpers.toDouble(parts(1))) match {
         case (Some(min), Some(max)) =>
-          // Использует Iterator внутри контроллера для фильтрации
+          //
           val found = controller.filterByPrice(min, max)
           println(CLIViewHelpers.drawStockRow(found, 20))
         case _                      => println("Invalid numbers.")
@@ -71,4 +77,11 @@ class ChangeStrategyCommand(controller: StockController) extends Command {
       case _   => println("Unknown.")
     }
   }
+}
+
+//! --- NEW UI COMMAND FOR UNDO ---
+class UndoCommand(controller: StockController) extends Command {
+  def description: String = "Undo last add/delete"
+  def execute(): Unit     =
+    if (controller.undoLastAction()) println("Undo successful.") else println("Nothing to undo.")
 }

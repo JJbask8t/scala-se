@@ -1,6 +1,7 @@
 package stockpilot.controller
 
 import stockpilot.model._
+import scala.util.{Try, Success, Failure}
 
 // Controller layer: business logic (managing stocks)
 //Connects to the Model (StockRepository), but not the View
@@ -10,6 +11,7 @@ class StockController(repo: IStockRepository) extends Observable {
 
   // keep the current sorting strategy, by default = by ticker
   private var sortStrategy: StockSortStrategy = SortByTicker
+  private val undoManager                     = new UndoManager() // !new
 
   // Method for changing strategy
   def setSortStrategy(strategy: StockSortStrategy): Unit = {
@@ -20,37 +22,38 @@ class StockController(repo: IStockRepository) extends Observable {
   // use a strategy to sort the list
   def allStocks: List[Stock] = sortStrategy.sort(repo.all)
 
-  // Accepts strings rather than ready-made Doubles, delegating parsing to the Factory
-  def addStockFromInput(ticker: String, pe: String, eps: String, price: String): Boolean =
-    // Используем Factory Method для создания [cite: 531]
-    StockFactory.createStock(ticker, pe, eps, price) match {
-      case Some(stock) =>
-        val added = repo.add(stock)
-        if (added) notifyObservers()
-        added
-      case None        => false // Data validation error
+  // ! modified to use Try Monad and Undo Command
+  def addStockFromInput(ticker: String, pe: String, eps: String, price: String): Try[Unit] =
+    // 1. Try to create stock using Factory
+    StockFactory.createStock(ticker, pe, eps, price).flatMap { stock =>
+      // 2. Check logic (if exists)
+      if (repo.exists(stock.ticker)) {
+        Failure(new IllegalArgumentException(s"Ticker '${stock.ticker}' already exists."))
+      } else {
+        // 3. Create Command and Execute via Manager
+        val cmd = new AddStockAction(stock, repo)
+        undoManager.execute(cmd)
+        notifyObservers()
+        Success(())
+      }
     }
 
-  // Old method (current is addStockFromInput)
-
-  /* def addStock(ticker: String, pe: Double, eps: Double, price: Double): Boolean = {
-    val stock = Stock(ticker.toUpperCase, pe, eps, price)
-    val added = repo.add(stock)
-    if (added) notifyObservers()
-    added
-  } */
-
-  def getStock(ticker: String): Option[Stock] = repo.get(ticker)
-
-  def deleteStock(ticker: String): Boolean = {
-    val deleted = repo.delete(ticker)
-    if (deleted) notifyObservers()
-    deleted
+  // ! Modified to use Undo Command
+  def deleteStock(ticker: String): Boolean = repo.get(ticker) match {
+    case Some(stock) =>
+      val cmd = new DeleteStockAction(stock, repo)
+      undoManager.execute(cmd)
+      notifyObservers()
+      true
+    case None        => false
   }
 
-  /* def filterByPrice(min: Double, max: Double): List[Stock] =
-    // Here: also apply the sorting strategy to the filtered list
-    sortStrategy.sort(repo.findByPrice(min, max)) */
+  // New method for UI
+  def undoLastAction(): Boolean = {
+    val result = undoManager.undo()
+    if (result) notifyObservers()
+    result
+  }
 
   // use Iterator/Iterable:
   // treat ‘repo’ like a List, calling the .filter method directly.
@@ -59,5 +62,6 @@ class StockController(repo: IStockRepository) extends Observable {
     sortStrategy.sort(filtered)
   }
 
-  def exists(ticker: String): Boolean = repo.exists(ticker)
+  def getStock(ticker: String): Option[Stock] = repo.get(ticker)
+  def exists(ticker: String): Boolean         = repo.exists(ticker)
 }

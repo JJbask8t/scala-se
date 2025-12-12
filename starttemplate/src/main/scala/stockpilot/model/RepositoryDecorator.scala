@@ -8,6 +8,10 @@ abstract class RepositoryDecorator(wraps: IStockRepository) extends IStockReposi
   def add(stock: Stock): Boolean         = wraps.add(stock)
   def delete(ticker: String): Boolean    = wraps.delete(ticker)
   def iterator: Iterator[Stock]          = wraps.iterator
+
+  // ! Forwarding Memento methods
+  def createMemento(): StockMemento     = wraps.createMemento()
+  def setMemento(m: StockMemento): Unit = wraps.setMemento(m)
 }
 
 // Specific decorator: Logging

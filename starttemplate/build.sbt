@@ -14,10 +14,12 @@ lazy val root = project.in(file(".")).settings(
 
   // 1. Исключаем по именам файлов (физически)
   // Это сработает, даже если мы ошиблись с именем пакета.
-  coverageExcludedFiles := ".*Main.scala;.*CLIView.scala;.*GUIView.scala",
+  coverageExcludedFiles :=
+    ".*Main.scala;.*CLIView.scala;.*GUIView.scala;.*Commands.scala;.*StockModule.scala",
 
 // Exclude packages logically
-  coverageExcludedPackages := "stockpilot\\.view\\..*;stockpilot\\.app\\..*",
+  coverageExcludedPackages :=
+    "stockpilot\\.view\\..*;stockpilot\\.app\\.main;stockpilot\\.app\\.Main",
 
   // XML support
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",

@@ -2,6 +2,7 @@ package stockpilot.controller
 
 import _root_.stockpilot.model._
 import scala.util.{Try, Success, Failure}
+import java.io.{PrintWriter, File}
 
 /** Concrete implementation of the Controller Component. hidden from the outside world
   * (package-private). Access is restricted to the Interface IStockController.
@@ -27,21 +28,20 @@ private[stockpilot] class StockController(repo: IStockRepository, fileIO: FileIO
       ticker: String,
       pe: String,
       eps: String,
-      price: String
-  ): Try[Unit] =
-    // 1. Try to create stock using Factory
-    StockFactory.createStock(ticker, pe, eps, price).flatMap { stock =>
-      // 2. Check logic (if exists)
-      if (repo.exists(stock.ticker)) {
-        Failure(new IllegalArgumentException(s"Ticker '${stock.ticker}' already exists."))
-      } else {
-        // 3. Create Command and Execute via Manager
-        val cmd = new AddStockAction(stock, repo)
-        undoManager.execute(cmd)
-        notifyObservers()
-        Success(())
-      }
+      price: String,
+      qty: String
+  ): Try[Unit] = StockFactory.createStock(ticker, pe, eps, price, qty).flatMap { stock =>
+    if (repo.exists(stock.ticker)) {
+      Failure(new IllegalArgumentException(s"Ticker '${stock.ticker}' already exists."))
+    } else {
+      val cmd = new AddStockAction(stock, repo)
+      undoManager.execute(cmd)
+      notifyObservers()
+      Success(())
+
     }
+
+  }
 
   // Modified to use Undo Command
   override def deleteStock(ticker: String): Boolean = repo.get(ticker) match {
@@ -53,14 +53,12 @@ private[stockpilot] class StockController(repo: IStockRepository, fileIO: FileIO
     case None        => false
   }
 
-  // New method for UI
   override def undoLastAction(): Boolean = {
     val result = undoManager.undo()
     if (result) notifyObservers()
     result
   }
 
-  // treat ‘repo’ like a List, calling the .filter method directly.
   override def filterByPrice(min: Double, max: Double): List[Stock] = {
     val filtered = repo.filter(s => s.price >= min && s.price <= max).toList
     sortStrategy.sort(filtered)
@@ -75,5 +73,29 @@ private[stockpilot] class StockController(repo: IStockRepository, fileIO: FileIO
   }
 
   override def exists(ticker: String): Boolean = repo.exists(ticker)
+
+  override def generateReport(): Try[String] = Try {
+    val filename = "portfolio_report.csv"
+    val pw       = new PrintWriter(new File(filename))
+    val sb       = new StringBuilder
+
+    // Header
+    sb.append("Ticker;Quantity;Price;Total Value;Verdict\n")
+
+    // Filter only portfolio stocks (qty > 0)
+    val portfolio = repo.all.filter(_.quantity > 0)
+
+    portfolio.foreach { s =>
+      sb.append(f"${s.ticker};${s.quantity};${s.price}%.2f;${s.totalValue}%.2f;${s.verdict}\n")
+    }
+
+    // Total Sum
+    val totalSum = portfolio.map(_.totalValue).sum
+    sb.append(f"\nTOTAL PORTFOLIO VALUE;;;;$totalSum%.2f\n")
+
+    pw.write(sb.toString())
+    pw.close()
+    s"Report saved to $filename"
+  }
 
 }

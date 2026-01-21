@@ -27,7 +27,7 @@ class GUIViewSpec extends AnyWordSpec with Matchers {
         ctrl.addObserver(gui)
 
         // Trigger update to see if GUI crashes on redraw
-        ctrl.addStockFromInput("TEST", "1", "1", "1")
+        ctrl.addStockFromInput("TEST", "1", "1", "1", "0")
       }
     }
   }

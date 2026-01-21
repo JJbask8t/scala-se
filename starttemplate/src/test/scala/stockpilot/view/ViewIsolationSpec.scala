@@ -9,19 +9,28 @@ import scala.util.Success
 class ViewIsolationSpec extends AnyWordSpec with Matchers {
 
   /** TEST DOUBLE: Controller Stub. Allows testing View without any real business logic dependency.
+    * Conforms to SE-10 requirements on Testing Components.
     */
   class ControllerStub extends IStockController {
-    override def allStocks: List[Stock]                                         = List(Stock("MOCK", 1, 1, 1))
-    override def addStockFromInput(t: String, p: String, e: String, pr: String) = Success(())
-    override def deleteStock(t: String)                                         = true
-    override def undoLastAction()                                               = true
-    override def filterByPrice(min: Double, max: Double)                        = Nil
-    override def setSortStrategy(s: StockSortStrategy)                          = {}
-    override def save()                                                         = {}
-    override def load()                                                         = {}
+    override def allStocks: List[Stock] = List(Stock("MOCK", 1, 1, 1))
 
-    // --- MISSING METHOD ADDED HERE ---
-    override def exists(ticker: String): Boolean = ticker == "MOCK"
+    // Updated to 5 arguments
+    override def addStockFromInput(t: String, p: String, e: String, pr: String, q: String) =
+      Success(())
+
+    override def deleteStock(t: String) = true
+
+    // Fixed: Added missing method
+    override def exists(ticker: String): Boolean = true
+
+    override def undoLastAction()                        = true
+    override def filterByPrice(min: Double, max: Double) = Nil
+    override def setSortStrategy(s: StockSortStrategy)   = {}
+    override def save()                                  = {}
+    override def load()                                  = {}
+
+    // Fixed: Added missing method
+    override def generateReport() = Success("Stub report")
 
     // Stubbing Observable methods
     override def addObserver(o: stockpilot.controller.Observer): Unit    = {}
@@ -36,5 +45,7 @@ class ViewIsolationSpec extends AnyWordSpec with Matchers {
       val tui  = new CLIView(stub)
       tui should not be null
     }
+
   }
+
 }

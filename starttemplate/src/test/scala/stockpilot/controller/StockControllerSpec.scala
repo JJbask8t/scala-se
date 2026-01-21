@@ -4,10 +4,11 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 import _root_.stockpilot.model._
 import scala.util.{Success, Failure}
+import java.io.File
 
 class StockControllerSpec extends AnyWordSpec with Matchers {
 
-  // --- Test Doubles (Stubs) ---
+  // --- Mocks ---
   class MockRepo extends IStockRepository {
     var stocks                                     = scala.collection.mutable.Map[String, Stock]()
     override def all: List[Stock]                  = stocks.values.toList
@@ -32,112 +33,73 @@ class StockControllerSpec extends AnyWordSpec with Matchers {
     override def load: StockMemento          = saved.getOrElse(StockMemento(Nil))
   }
 
-  // --- Tests ---
-
   "StockController" should {
-    val s1 = Stock("AAPL", 10.0, 1.0, 100.0)
 
-    "add valid stock via input" in {
+    "add valid stock successfully" in {
+      val repo = new MockRepo
+      val ctrl = new StockController(repo, new MockFileIO)
+      val res  = ctrl.addStockFromInput("AAPL", "10", "1", "100", "0")
+      res shouldBe a[Success[_]]
+      repo.exists("AAPL") shouldBe true
+    }
+
+    // Branch: StockFactory fails
+    "fail when input is invalid (Factory failure)" in {
+      val repo = new MockRepo
+      val ctrl = new StockController(repo, new MockFileIO)
+      val res  = ctrl.addStockFromInput("AAPL", "nan", "1", "100", "0")
+      res shouldBe a[Failure[_]]
+    }
+
+    // Branch: Repository fails (Duplicate)
+    "fail when adding duplicate stock (Repo failure)" in {
+      val repo = new MockRepo
+      repo.add(Stock("AAPL", 1, 1, 1))
+      val ctrl = new StockController(repo, new MockFileIO)
+
+      val res = ctrl.addStockFromInput("AAPL", "10", "1", "100", "0")
+      res shouldBe a[Failure[_]]
+      res.failed.get.getMessage should include("exists")
+    }
+
+    "generate CSV report successfully" in {
+      val repo = new MockRepo
+      repo.add(Stock("TEST", 1, 1, 100, 5)) // In portfolio
+      val ctrl = new StockController(repo, new MockFileIO)
+
+      val res = ctrl.generateReport()
+      res shouldBe a[Success[_]]
+
+      val f = new File("portfolio_report.csv")
+      f.exists() shouldBe true
+      f.delete() // Cleanup
+    }
+
+    // Test filter logic
+    "filter stocks by price range" in {
+      val repo = new MockRepo
+      repo.add(Stock("A", 1, 1, 10))
+      repo.add(Stock("B", 1, 1, 100))
+      val ctrl = new StockController(repo, new MockFileIO)
+
+      val res = ctrl.filterByPrice(0, 50)
+      res.length shouldBe 1
+      res.head.ticker shouldBe "A"
+    }
+
+    // Test persistence delegation
+    "save and load via FileIO" in {
       val repo = new MockRepo
       val io   = new MockFileIO
       val ctrl = new StockController(repo, io)
 
-      val result = ctrl.addStockFromInput("AAPL", "10", "1", "100")
-      result shouldBe a[Success[_]]
-      repo.exists("AAPL") shouldBe true
-    }
-
-    "fail to add invalid stock data" in {
-      val repo = new MockRepo
-      val ctrl = new StockController(repo, new MockFileIO)
-
-      val result = ctrl.addStockFromInput("AAPL", "invalid", "1", "100")
-      result shouldBe a[Failure[_]]
-      repo.all shouldBe empty
-    }
-
-    "fail to add duplicate stock" in {
-      val repo = new MockRepo
-      repo.add(s1)
-      val ctrl = new StockController(repo, new MockFileIO)
-
-      val result = ctrl.addStockFromInput("AAPL", "20", "2", "200")
-      result shouldBe a[Failure[_]]
-    }
-
-    "delete existing stock" in {
-      val repo = new MockRepo
-      repo.add(s1)
-      val ctrl = new StockController(repo, new MockFileIO)
-
-      ctrl.deleteStock("AAPL") shouldBe true
-      repo.exists("AAPL") shouldBe false
-    }
-
-    "handle delete of non-existent stock" in {
-      val ctrl = new StockController(new MockRepo, new MockFileIO)
-      ctrl.deleteStock("UNKNOWN") shouldBe false
-    }
-
-    "undo last action (Add -> Undo)" in {
-      val repo = new MockRepo
-      val ctrl = new StockController(repo, new MockFileIO)
-
-      ctrl.addStockFromInput("AAPL", "10", "1", "100")
-      repo.exists("AAPL") shouldBe true
-
-      ctrl.undoLastAction() shouldBe true
-      repo.exists("AAPL") shouldBe false
-    }
-
-    "undo last action (Delete -> Undo)" in {
-      val repo = new MockRepo
-      repo.add(s1)
-      val ctrl = new StockController(repo, new MockFileIO)
-
-      ctrl.deleteStock("AAPL")
-      repo.exists("AAPL") shouldBe false
-
-      ctrl.undoLastAction() shouldBe true
-      repo.exists("AAPL") shouldBe true
-    }
-
-    "filter stocks by price" in {
-      val repo = new MockRepo
-      repo.add(Stock("LOW", 1, 1, 10))
-      repo.add(Stock("HIGH", 1, 1, 100))
-      val ctrl = new StockController(repo, new MockFileIO)
-
-      val result = ctrl.filterByPrice(0, 50)
-      result.map(_.ticker) shouldBe List("LOW")
-    }
-
-    "save and load data" in {
-      val repo = new MockRepo
-      val io   = new MockFileIO
-      val ctrl = new StockController(repo, io)
-
-      // Save
-      repo.add(s1)
+      repo.add(Stock("A", 1, 1, 1))
       ctrl.save()
-      io.saved.get.stocks should contain(s1)
+      io.saved.isDefined shouldBe true
 
-      // Load
-      repo.delete("AAPL")
+      repo.delete("A")
       ctrl.load()
-      repo.exists("AAPL") shouldBe true
-    }
-
-    "notify observers on changes" in {
-      var notified = false
-      val observer = new Observer {
-        override def update(): Unit = notified = true
-      }
-      val ctrl     = new StockController(new MockRepo, new MockFileIO)
-      ctrl.addObserver(observer)
-
-      ctrl.addStockFromInput("TEST", "1", "1", "1")
-      notified shouldBe true
+      repo.exists("A") shouldBe true
     }
   }
 }

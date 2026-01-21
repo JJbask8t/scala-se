@@ -8,7 +8,14 @@ import scala.util.Try
   */
 trait IStockController extends Observable {
   def allStocks: List[Stock]
-  def addStockFromInput(ticker: String, pe: String, eps: String, price: String): Try[Unit]
+  def addStockFromInput(
+      ticker: String,
+      pe: String,
+      eps: String,
+      price: String,
+      qty: String
+  ): Try[Unit]
+
   def deleteStock(ticker: String): Boolean
   def undoLastAction(): Boolean
   def filterByPrice(min: Double, max: Double): List[Stock]
@@ -19,5 +26,7 @@ trait IStockController extends Observable {
   def load(): Unit
 
   def exists(ticker: String): Boolean
+
+  def generateReport(): Try[String]
 
 }

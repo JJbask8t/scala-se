@@ -4,27 +4,26 @@ import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
 
 class StrategySpec extends AnyWordSpec with Matchers {
-  val s1 = Stock("A", 10.0, 1.0, 100.0) // Exepnsive
-  val s2 = Stock("B", 10.0, 1.0, 10.0)  // Cheap
-  val s3 = Stock("C", 10.0, 1.0, 50.0)  // Middle
+  "Sorting Strategies" should {
+    val s1     = Stock("B_TICKER", 1, 1, 20.0, 0)
+    val s2     = Stock("A_TICKER", 1, 1, 10.0, 0)
+    val stocks = List(s1, s2)
 
-  val list = List(s3, s1, s2)
-
-  "SortByTicker" should {
-    "sort stocks alphabetically" in {
-      SortByTicker.sort(list) shouldBe List(s1, s2, s3) // A, B, C
+    "sort by ticker alphabetically (SortByTicker)" in {
+      val sorted = SortByTicker.sort(stocks)
+      sorted.map(_.ticker) shouldBe List("A_TICKER", "B_TICKER")
     }
+
+    "sort by price ascending (SortByPriceAsc)" in {
+      val sorted = SortByPriceAsc.sort(stocks)
+      sorted.map(_.price) shouldBe List(10.0, 20.0)
+    }
+
+    "sort by price descending (SortByPriceDesc)" in {
+      val sorted = SortByPriceDesc.sort(stocks)
+      sorted.map(_.price) shouldBe List(20.0, 10.0)
+    }
+
   }
 
-  "SortByPriceAsc" should {
-    "sort stocks by price ascending" in {
-      SortByPriceAsc.sort(list) shouldBe List(s2, s3, s1) // 10, 50, 100
-    }
-  }
-
-  "SortByPriceDesc" should {
-    "sort stocks by price descending" in {
-      SortByPriceDesc.sort(list) shouldBe List(s1, s3, s2) // 100, 50, 10
-    }
-  }
 }

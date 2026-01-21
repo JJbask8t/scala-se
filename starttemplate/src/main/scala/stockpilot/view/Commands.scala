@@ -22,7 +22,7 @@ class AddStockCommand(controller: StockController) extends Command {
 
     /*if (controller.addStockFromInput(t, p, e, pr)) println(s"Added $t.")
     else println(s"Error adding $t.")*/
-    // Handling the Try Monad from controller
+    // ! Handling the Try Monad from controller
     controller.addStockFromInput(t, p, e, pr) match {
       case Success(_)  => println(s"Successfully added $t.")
       case Failure(ex) => println(s"Error: ${ex.getMessage}")
@@ -79,20 +79,9 @@ class ChangeStrategyCommand(controller: StockController) extends Command {
   }
 }
 
-// --- UI COMMAND FOR UNDO ---
+//! --- NEW UI COMMAND FOR UNDO ---
 class UndoCommand(controller: StockController) extends Command {
   def description: String = "Undo last add/delete"
   def execute(): Unit     =
     if (controller.undoLastAction()) println("Undo successful.") else println("Nothing to undo.")
 }
-
-//! --- PERSISTENCE COMMANDS ---
-/* class SaveCommand(controller: StockController) extends Command {
-  def description: String = "Save data to file"
-  def execute(): Unit     = controller.save()
-} */
-
-/* class LoadCommand(controller: StockController) extends Command {
-  def description: String = "Load data from file"
-  def execute(): Unit     = controller.load()
-} */

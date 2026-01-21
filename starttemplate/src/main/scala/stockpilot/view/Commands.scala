@@ -3,7 +3,7 @@ package stockpilot.view
 import scala.io.StdIn.readLine
 import scala.util.{Success, Failure}
 import stockpilot.model.{SortByTicker, SortByPriceAsc, SortByPriceDesc}
-import stockpilot.controller.StockController
+import stockpilot.controller.{StockController, IStockController}
 
 // Command interface
 trait Command {
@@ -12,7 +12,7 @@ trait Command {
 }
 
 // Command: add stock
-class AddStockCommand(controller: StockController) extends Command {
+class AddStockCommand(controller: IStockController) extends Command {
   def description: String = "Add stock"
   def execute(): Unit     = {
     val t  = readLine("Ticker: ")
@@ -20,8 +20,6 @@ class AddStockCommand(controller: StockController) extends Command {
     val e  = readLine("EPS: ")
     val pr = readLine("Price: ")
 
-    /*if (controller.addStockFromInput(t, p, e, pr)) println(s"Added $t.")
-    else println(s"Error adding $t.")*/
     // Handling the Try Monad from controller
     controller.addStockFromInput(t, p, e, pr) match {
       case Success(_)  => println(s"Successfully added $t.")
@@ -30,7 +28,7 @@ class AddStockCommand(controller: StockController) extends Command {
   }
 }
 // Command: Show all
-class ShowAllCommand(controller: StockController)  extends Command {
+class ShowAllCommand(controller: IStockController)  extends Command {
   def description: String = "Show all stocks"
   def execute(): Unit     = {
     val grid = CLIViewHelpers.drawStockRow(controller.allStocks, 20)
@@ -39,7 +37,7 @@ class ShowAllCommand(controller: StockController)  extends Command {
 }
 
 // Command: Filter
-class FilterStockCommand(controller: StockController) extends Command {
+class FilterStockCommand(controller: IStockController) extends Command {
   def description: String = "Filter by price [min-max]"
   def execute(): Unit     = {
     val raw   = readLine("Enter price range (min-max): ")
@@ -57,7 +55,7 @@ class FilterStockCommand(controller: StockController) extends Command {
 }
 
 // Command: Delete
-class DeleteStockCommand(controller: StockController) extends Command {
+class DeleteStockCommand(controller: IStockController) extends Command {
   def description: String = "Delete stock by ticker"
   def execute(): Unit     = {
     val t = readLine("Ticker to delete: ")
@@ -66,7 +64,7 @@ class DeleteStockCommand(controller: StockController) extends Command {
 }
 
 // Command: Change strategy (nested mini-menu)
-class ChangeStrategyCommand(controller: StockController) extends Command {
+class ChangeStrategyCommand(controller: IStockController) extends Command {
   def description: String = "Change Sort Strategy"
   def execute(): Unit     = {
     println("a) Ticker, b) PriceAsc, c) PriceDesc")
@@ -80,19 +78,8 @@ class ChangeStrategyCommand(controller: StockController) extends Command {
 }
 
 // --- UI COMMAND FOR UNDO ---
-class UndoCommand(controller: StockController) extends Command {
+class UndoCommand(controller: IStockController) extends Command {
   def description: String = "Undo last add/delete"
   def execute(): Unit     =
     if (controller.undoLastAction()) println("Undo successful.") else println("Nothing to undo.")
 }
-
-//! --- PERSISTENCE COMMANDS ---
-/* class SaveCommand(controller: StockController) extends Command {
-  def description: String = "Save data to file"
-  def execute(): Unit     = controller.save()
-} */
-
-/* class LoadCommand(controller: StockController) extends Command {
-  def description: String = "Load data from file"
-  def execute(): Unit     = controller.load()
-} */

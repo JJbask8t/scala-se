@@ -1,7 +1,7 @@
 package stockpilot.view
 
 import scala.io.StdIn.readLine
-import stockpilot.controller.{StockController, Observer}
+import stockpilot.controller.{StockController, Observer, IStockController}
 import stockpilot.model.Stock
 
 // remove CLIViewHelpers.toDouble and other parsers,
@@ -144,7 +144,7 @@ object CLIViewHelpers {
 }
  */
 
-class CLIView(controller: StockController) extends Observer {
+class CLIView(controller: IStockController) extends Observer {
 
   // Command initialization (Command Pattern)
   private val commands: Map[String, Command] = Map(
@@ -154,10 +154,6 @@ class CLIView(controller: StockController) extends Observer {
     "4" -> new DeleteStockCommand(controller),
     "5" -> new ChangeStrategyCommand(controller),
     "6" -> new UndoCommand(controller)
-
-    // ! NEW : save/load settings
-    // "7" -> new SaveCommand(controller)
-    // "8" -> new LoadCommand(controller)
   )
 
   def run(): Unit = {

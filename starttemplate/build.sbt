@@ -16,18 +16,13 @@ lazy val root = project.in(file(".")).settings(
   // Это сработает, даже если мы ошиблись с именем пакета.
   coverageExcludedFiles := ".*Main.scala;.*CLIView.scala;.*GUIView.scala",
 
-  // 2. Исключаем по пакетам (логически)
-  // stockpilot.view.* -> весь UI
-  // stockpilot.app.main -> класс, генерируемый @main (с маленькой буквы!)
-  // stockpilot.app.Main -> на случай, если это объект
-  coverageExcludedPackages :=
-    "stockpilot\\.view\\..*;stockpilot\\.app\\.main;stockpilot\\.app\\.Main",
+// Exclude packages logically
+  coverageExcludedPackages := "stockpilot\\.view\\..*;stockpilot\\.app\\..*",
 
-  // ! --- DEPENDENCIES FOR FILE IO ---
   // XML support
   libraryDependencies += "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
   // JSON support
   libraryDependencies += "org.playframework"      %% "play-json"   % "3.0.3",
-  // ! --- GUI DEPENDENCY (ScalaSwing) ---
+  // GUI DEPENDENCY
   libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0"
 )

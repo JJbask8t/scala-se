@@ -2,7 +2,7 @@ package stockpilot.view
 
 import scala.swing._
 import scala.swing.event._
-import stockpilot.controller.{StockController, Observer}
+import stockpilot.controller.{StockController, Observer, IStockController}
 import stockpilot.model.{Stock, SortByPriceAsc, SortByPriceDesc, SortByTicker}
 import java.awt.Dimension
 import java.awt.Color
@@ -11,7 +11,7 @@ import javax.swing.WindowConstants
 /** Full-featured Graphical User Interface. Mirrors all TUI functionality: Add, Delete, Sort,
   * Filter, Undo.
   */
-class GUIView(controller: StockController) extends MainFrame with Observer {
+class GUIView(controller: IStockController) extends MainFrame with Observer {
 
   title = "StockPilot"
   minimumSize = new Dimension(800, 600)

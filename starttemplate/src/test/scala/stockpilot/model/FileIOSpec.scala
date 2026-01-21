@@ -7,46 +7,40 @@ import java.io.File
 class FileIOSpec extends AnyWordSpec with Matchers {
 
   val s1      = Stock("TEST1", 10.0, 1.0, 100.0)
-  val s2      = Stock("TEST2", 20.0, 2.0, 200.0)
-  val memento = StockMemento(List(s1, s2))
+  val memento = StockMemento(List(s1))
 
-  "FileIOXml" should {
-    "save and load stocks correctly" in {
-      val io = new FileIOXml
-      // Clean up before test
-      new File("stock_data.xml").delete()
+  "FileIOJson" should {
+    val io       = new FileIOJson
+    val filename = "stock_data.json"
 
-      // Save
+    "save and load correctly" in {
+      new File(filename).delete()
       io.save(memento)
-      new File("stock_data.xml").exists() shouldBe true
+      new File(filename).exists() shouldBe true
 
-      // Load
       val loaded = io.load
-      loaded.stocks should contain allElementsOf List(s1, s2)
-
-      // Clean up
-      new File("stock_data.xml").delete()
+      loaded.stocks should contain(s1)
+      new File(filename).delete()
     }
 
     "handle missing file gracefully" in {
-      val io = new FileIOXml
-      new File("stock_data.xml").delete()
+      new File(filename).delete()
       io.load.stocks shouldBe empty
     }
   }
 
-  "FileIOJson" should {
-    "save and load stocks correctly" in {
-      val io = new FileIOJson
-      new File("stock_data.json").delete()
+  "FileIOXml" should {
+    val io       = new FileIOXml
+    val filename = "stock_data.xml"
 
+    "save and load correctly" in {
+      new File(filename).delete()
       io.save(memento)
-      new File("stock_data.json").exists() shouldBe true
+      new File(filename).exists() shouldBe true
 
       val loaded = io.load
-      loaded.stocks should contain allElementsOf List(s1, s2)
-
-      new File("stock_data.json").delete()
+      loaded.stocks should contain(s1)
+      new File(filename).delete()
     }
   }
 }

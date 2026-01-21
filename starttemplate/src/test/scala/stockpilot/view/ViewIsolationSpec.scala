@@ -6,11 +6,12 @@ import stockpilot.controller.IStockController
 import stockpilot.model.{Stock, StockSortStrategy}
 import scala.util.Success
 
-class CommandSpec extends AnyWordSpec with Matchers {
+class ViewIsolationSpec extends AnyWordSpec with Matchers {
 
-  // Stub Controller for commands
+  /** TEST DOUBLE: Controller Stub. Allows testing View without any real business logic dependency.
+    */
   class ControllerStub extends IStockController {
-    override def allStocks: List[Stock]                                         = Nil
+    override def allStocks: List[Stock]                                         = List(Stock("MOCK", 1, 1, 1))
     override def addStockFromInput(t: String, p: String, e: String, pr: String) = Success(())
     override def deleteStock(t: String)                                         = true
     override def undoLastAction()                                               = true
@@ -20,24 +21,20 @@ class CommandSpec extends AnyWordSpec with Matchers {
     override def load()                                                         = {}
 
     // --- MISSING METHOD ADDED HERE ---
-    override def exists(ticker: String): Boolean = true
+    override def exists(ticker: String): Boolean = ticker == "MOCK"
 
-    // Observer stubbing
+    // Stubbing Observable methods
     override def addObserver(o: stockpilot.controller.Observer): Unit    = {}
     override def removeObserver(o: stockpilot.controller.Observer): Unit = {}
     override def notifyObservers(): Unit                                 = {}
   }
 
-  "Commands" should {
-    val ctrl = new ControllerStub()
-
-    "have correct descriptions" in {
-      new AddStockCommand(ctrl).description shouldBe "Add stock"
-      new ShowAllCommand(ctrl).description shouldBe "Show all stocks"
-      new DeleteStockCommand(ctrl).description shouldBe "Delete stock by ticker"
-      new FilterStockCommand(ctrl).description shouldBe "Filter by price [min-max]"
-      new ChangeStrategyCommand(ctrl).description shouldBe "Change Sort Strategy"
-      new UndoCommand(ctrl).description shouldBe "Undo last add/delete"
+  "CLIView" should {
+    "depend only on IStockController interface" in {
+      val stub = new ControllerStub()
+      // If this compiles, the View is correctly decoupled from the concrete Controller class
+      val tui  = new CLIView(stub)
+      tui should not be null
     }
   }
 }

@@ -1,10 +1,11 @@
 package stockpilot.app
 
-import stockpilot.model._
-import stockpilot.controller.StockController
+//import stockpilot.model._
+//import stockpilot.controller.StockController
 import stockpilot.view.{CLIView, GUIView}
+import stockpilot.StockModule
 
-/* //! Mock Implementation for Stage 1 (To keep code compilable)
+/* // Mock Implementation for Stage 1 (To keep code compilable)
 class MockFileIO extends FileIO {
   override def load: StockMemento          = {
     println("Mock load called")
@@ -16,15 +17,18 @@ class MockFileIO extends FileIO {
 
 @main
 def main(): Unit = {
-  // ! Try to load appsettings from file, otherwise use default list
 
-  // ! 1. Option 1: XML
+  // ? 1. Option 1: XML
   // val fileIO = new FileIOXml()
+  // ? 1. Option 2: JSON (Selected)
+  // val fileIO = new FileIOJson()
 
-  // ! 1. Option 2: JSON (Selected)
-  val fileIO = new FileIOJson()
+  // ! 1. Ask the Module to prepare the main part of the application
+  // ! Main doesn't know about JSON, XML, or Repositories anymore.
+  val controller = StockModule.setupController()
 
-  // 2. Load state
+  // ! 2. Load state => NOW IN StockModule.scala
+  /*
   val loadedMemento = fileIO.load
   val initialStocks =
     if (loadedMemento.stocks.nonEmpty) { loadedMemento.stocks }
@@ -37,13 +41,14 @@ def main(): Unit = {
         Stock("GOOG", 12.01, 0.3000, 98.01)
       )
     }
+   */
 
   // 3. Wiring with Dependency Injection
-  val repo       = new LoggingRepository(new StockRepository(initialStocks)) // Wrap in Decorator
+  // val repo = new LoggingRepository(new StockRepository(initialStocks)) // Wrap in Decorator
   // val fileIO     = new MockFileIO()        // replaced by FileIO: JSON +- XML
-  val controller = new StockController(repo, fileIO)
+  // val controller = StockModule.setupController(Nil) // ? new StockController(repo, fileIO)
 
-  // ! 4. Create Views
+  // 4. Create Views
   val tui = new CLIView(controller)
   val gui = new GUIView(controller)
 

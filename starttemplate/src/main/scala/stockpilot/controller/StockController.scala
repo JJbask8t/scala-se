@@ -1,6 +1,6 @@
 package stockpilot.controller
 
-import stockpilot.model._
+import _root_.stockpilot.model._
 import scala.util.{Try, Success, Failure}
 
 /** Concrete implementation of the Controller Component. hidden from the outside world

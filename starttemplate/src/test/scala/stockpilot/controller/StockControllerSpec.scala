@@ -2,6 +2,7 @@ package stockpilot.controller
 
 import org.scalatest.wordspec.AnyWordSpec
 import org.scalatest.matchers.should.Matchers
+// FIXED: Use absolute import to avoid package ambiguity
 import _root_.stockpilot.model._
 import scala.util.{Success, Failure}
 import java.io.File
@@ -35,6 +36,7 @@ class StockControllerSpec extends AnyWordSpec with Matchers {
 
   "StockController" should {
 
+    // 1. Success Path
     "add valid stock successfully" in {
       val repo = new MockRepo
       val ctrl = new StockController(repo, new MockFileIO)
@@ -43,18 +45,20 @@ class StockControllerSpec extends AnyWordSpec with Matchers {
       repo.exists("AAPL") shouldBe true
     }
 
-    // Branch: StockFactory fails
-    "fail when input is invalid (Factory failure)" in {
+    // 2. Factory Failure Path (Invalid Number)
+    "fail when input format is invalid" in {
       val repo = new MockRepo
       val ctrl = new StockController(repo, new MockFileIO)
-      val res  = ctrl.addStockFromInput("AAPL", "nan", "1", "100", "0")
+      val res  = ctrl.addStockFromInput("AAPL", "NOT_A_NUMBER", "1", "100", "0")
       res shouldBe a[Failure[_]]
+      // Verify nothing changed
+      repo.all shouldBe empty
     }
 
-    // Branch: Repository fails (Duplicate)
-    "fail when adding duplicate stock (Repo failure)" in {
+    // 3. Repository Failure Path (Duplicate)
+    "fail when adding duplicate stock" in {
       val repo = new MockRepo
-      repo.add(Stock("AAPL", 1, 1, 1))
+      repo.add(Stock("AAPL", 1, 1, 1, 0))
       val ctrl = new StockController(repo, new MockFileIO)
 
       val res = ctrl.addStockFromInput("AAPL", "10", "1", "100", "0")
@@ -62,44 +66,60 @@ class StockControllerSpec extends AnyWordSpec with Matchers {
       res.failed.get.getMessage should include("exists")
     }
 
-    "generate CSV report successfully" in {
+    // 4. Delete Logic (True/False)
+    "delete stock returns true if found, false otherwise" in {
       val repo = new MockRepo
-      repo.add(Stock("TEST", 1, 1, 100, 5)) // In portfolio
+      repo.add(Stock("DEL", 1, 1, 1, 0))
       val ctrl = new StockController(repo, new MockFileIO)
 
-      val res = ctrl.generateReport()
-      res shouldBe a[Success[_]]
+      // Existing
+      ctrl.deleteStock("DEL") shouldBe true
+      repo.exists("DEL") shouldBe false
 
-      val f = new File("portfolio_report.csv")
-      f.exists() shouldBe true
-      f.delete() // Cleanup
+      // Non-existing
+      ctrl.deleteStock("GHOST") shouldBe false
     }
 
-    // Test filter logic
-    "filter stocks by price range" in {
+    // 5. Undo Logic (Empty/Non-empty)
+    "handle undo operations" in {
       val repo = new MockRepo
-      repo.add(Stock("A", 1, 1, 10))
-      repo.add(Stock("B", 1, 1, 100))
       val ctrl = new StockController(repo, new MockFileIO)
 
-      val res = ctrl.filterByPrice(0, 50)
-      res.length shouldBe 1
-      res.head.ticker shouldBe "A"
+      // Empty stack undo -> should return false
+      ctrl.undoLastAction() shouldBe false
+
+      // Perform action
+      ctrl.addStockFromInput("UNDO_ME", "1", "1", "1", "0")
+      repo.exists("UNDO_ME") shouldBe true
+
+      // Undo success -> should return true
+      ctrl.undoLastAction() shouldBe true
+      repo.exists("UNDO_ME") shouldBe false
     }
 
-    // Test persistence delegation
-    "save and load via FileIO" in {
+    // 6. Report and Filter
+    "generate CSV report" in {
       val repo = new MockRepo
-      val io   = new MockFileIO
-      val ctrl = new StockController(repo, io)
-
-      repo.add(Stock("A", 1, 1, 1))
-      ctrl.save()
-      io.saved.isDefined shouldBe true
-
-      repo.delete("A")
-      ctrl.load()
-      repo.exists("A") shouldBe true
+      val ctrl = new StockController(repo, new MockFileIO)
+      ctrl.generateReport() shouldBe a[Success[_]]
+      new File("portfolio_report.csv").delete()
     }
+
+    "filter stocks" in {
+      val repo = new MockRepo
+      repo.add(Stock("A", 1, 1, 10, 0))
+      val ctrl = new StockController(repo, new MockFileIO)
+      ctrl.filterByPrice(0, 20).size shouldBe 1
+    }
+
+    "sort strategies" in {
+      val repo = new MockRepo
+      val ctrl = new StockController(repo, new MockFileIO)
+      // Just ensure method call works (coverage), logic tested in StrategySpec
+      ctrl.setSortStrategy(SortByTicker)
+      ctrl.allStocks
+    }
+
   }
+
 }

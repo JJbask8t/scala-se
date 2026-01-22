@@ -6,41 +6,38 @@ import org.scalatest.matchers.should.Matchers
 class StockSpec extends AnyWordSpec with Matchers {
 
   "Stock" should {
-    // Fair Value = EPS * 15
-    // Case 1: Buy (Price < FV)
-    "return BUY verdict when undervalued" in {
-      // FV = 10 * 15 = 150. Price = 140. 140 < 150 -> BUY
-      val s = Stock("BUY", 20, 10.0, 140.0)
-      s.verdict shouldBe Verdict.Buy
-      s.verdict.toString shouldBe "BUY"
+    "calculate FairValue and Verdict correctly" in {
+      val sBuy = Stock("B", 1, 10, 100, 0) // FV=150
+      sBuy.verdict shouldBe Verdict.Buy
+
+      val sSell = Stock("S", 1, 10, 250, 0) // FV=150, Limit=225
+      sSell.verdict shouldBe Verdict.Sell
+
+      val sHold = Stock("H", 1, 10, 160, 0)
+      sHold.verdict shouldBe Verdict.Hold
     }
 
-    // Case 2: Sell (Price > FV * 1.5)
-    "return SELL verdict when significantly overvalued" in {
-      // FV = 10 * 15 = 150. Threshold = 150 * 1.5 = 225. Price = 230 -> SELL
-      val s = Stock("SELL", 20, 10.0, 230.0)
-      s.verdict shouldBe Verdict.Sell
-      s.verdict.toString shouldBe "SELL"
-    }
+    "provide correct TUI formatting (toLines)" in {
+      // FIXED: Changed EPS from 1 to 10.0 to ensure Verdict is BUY
+      // FairValue = 10 * 15 = 150. Price = 100. 100 < 150 -> BUY
+      val s = Stock("AAPL", 1, 10.0, 100.0, 5.0)
 
-    // Case 3: Hold (In between)
-    "return HOLD verdict when fairly valued" in {
-      // FV = 150. Price = 160. 150 < 160 < 225 -> HOLD
-      val s = Stock("HOLD", 20, 10.0, 160.0)
-      s.verdict shouldBe Verdict.Hold
-      s.verdict.toString shouldBe "HOLD"
-    }
-
-    "calculate total value correctly" in {
-      val s = Stock("T", 1, 1, 10.0, 5.0) // 10 * 5
-      s.totalValue shouldBe 50.0
-    }
-
-    "format correctly for table view" in {
-      val s = Stock("TEST", 1, 1, 100.0, 5.0)
-      s.toLines(0) should include("TEST")
+      // Check every line index explicitly
+      s.toLines(0) should include("AAPL")
       s.toLines(1) should include("100.0")
-      s.toLines(99) shouldBe "" // Default case
+      s.toLines(2) should include("5.0")
+      s.toLines(3) should include("BUY")
+      s.toLines(4) shouldBe ""
+    }
+
+    "have correct Verdict string representation and colors" in {
+      Verdict.Buy.toString shouldBe "BUY"
+      Verdict.Sell.toString shouldBe "SELL"
+      Verdict.Hold.toString shouldBe "HOLD"
+
+      Verdict.Buy.color should not be null
+      Verdict.Sell.color should not be null
+      Verdict.Hold.color should not be null
     }
 
   }

@@ -140,7 +140,6 @@ docker run -it --rm \
 Prerequisites:
 
 Install an X Server for Windows (e.g., VcXsrv / XLaunch)
-https://gemini.google.com/app/213740aff72e687c#:~:text=Windows%20(e.g.%2C-,VcXsrv%20/%20XLaunch,-).
 
 Launch XLaunch with the following settings:
 

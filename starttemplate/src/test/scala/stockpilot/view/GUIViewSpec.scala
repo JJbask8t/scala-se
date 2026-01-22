@@ -16,7 +16,7 @@ class GUIViewSpec extends AnyWordSpec with Matchers {
   "GUIView" should {
     "be instantiable and register as observer" in {
       // Prepare MVC parts
-      val repo = new StockRepository(Nil)
+      val repo = new StockRepository()
       val ctrl = new StockController(repo, new MockIO)
 
       // Initialize GUI (headless mode check)

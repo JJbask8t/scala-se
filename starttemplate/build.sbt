@@ -2,9 +2,10 @@
 val scala3Version = "3.3.6"
 
 lazy val root = project.in(file(".")).settings(
-  name         := "StartTemplate",
-  version      := "0.1.0-SNAPSHOT",
-  scalaVersion := scala3Version,
+  name                     := "StartTemplate",
+  version                  := "0.1.0-SNAPSHOT",
+  scalaVersion             := scala3Version,
+  Test / parallelExecution := false,
 
   // Библиотеки для тестов
   libraryDependencies += "org.scalactic"          %% "scalactic"   % "3.2.18",
@@ -12,15 +13,10 @@ lazy val root = project.in(file(".")).settings(
   // Dependency Injection (Google Guice)
   libraryDependencies += "com.google.inject"       % "guice"       % "7.0.0",
   // XML support
-  libraryDependencies += "org.scala-lang.modules" %% "scala-xml"   % "2.3.0",
+  libraryDependencies += "org.scala-lang.modules" %% "scala-xml"   % "2.3.0", // 2.3.0
   // JSON support
-  libraryDependencies += "org.playframework"      %% "play-json"   % "3.0.3",
+  libraryDependencies += "org.playframework"      %% "play-json"   % "3.0.3", // 3.0.3
   // GUI DEPENDENCY
   libraryDependencies += "org.scala-lang.modules" %% "scala-swing" % "3.0.0",
-  coverageExcludedPackages                        :=
-    "stockpilot\\.view\\..*;stockpilot\\.app\\.Main;stockpilot\\.app\\.Bootstrap",
-  coverageExcludedFiles                           := ".*CLIView.*;.*GUIView.*;.*Commands.*;.*Main.*;.*Bootstrap.*",
-  // exclude GUI- и TUI-Tests at gitHub server
-  Test / unmanagedSources / excludeFilter         := "GUIViewSpec.scala" || "CLIViewSpec.scala" ||
-    "ViewIsolationSpec.scala" || "CommandSpec.scala"
+  coverageExcludedPackages                        := "stockpilot\\.view(\\..*)?;stockpilot\\.app(\\..*)?"
 )

@@ -1,0 +1,33 @@
+{
+  "stocks" : [ {
+    "quantity" : 0,
+    "price" : 798.99,
+    "pe" : 16.64,
+    "eps" : 0.6852,
+    "ticker" : "RR.L"
+  }, {
+    "quantity" : 10,
+    "price" : 420.33,
+    "pe" : 28.5,
+    "eps" : 5.51,
+    "ticker" : "AAPL"
+  }, {
+    "quantity" : 12,
+    "price" : 112.09,
+    "pe" : 13,
+    "eps" : 13.3,
+    "ticker" : "ASML"
+  }, {
+    "quantity" : 0,
+    "price" : 98.01,
+    "pe" : 12.01,
+    "eps" : 0.3,
+    "ticker" : "GOOG"
+  }, {
+    "quantity" : 5,
+    "price" : 120.01,
+    "pe" : 26.8,
+    "eps" : 110.23,
+    "ticker" : "GOOGL"
+  } ]
+}

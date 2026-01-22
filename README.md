@@ -95,4 +95,65 @@ The system automatically analyzes the stock using a simplified Graham formula:
 * **HOLD:** In all other cases.
 
 ---
+
+## 🐳 Docker Usage
+
+You can run StockPilot inside a Docker container. This ensures that the application runs in an isolated environment with all dependencies pre-installed (Java 21, Scala, sbt, GUI libraries).
+
+### 1. Build the Image
+First, build the Docker image from the project root directory:
+
+```bash
+docker build -t stockpilot:v1 .
+```
+### 2. Run the Container
+The run command depends on your operating system because the application requires access to your graphical display (X11).
+
+#### **macOS (with XQuartz)**
+Prerequisites:
+
+Install XQuartz.
+
+Open XQuartz preferences (Cmd + ,) -> Security tab -> Check "Allow connections from network clients".
+
+Restart XQuartz.
+
+Run:
+```bash
+# Allow local docker connection to X server
+xhost +localhost
+
+# Run container
+docker run -it --rm -e DISPLAY=host.docker.internal:0 stockpilot:v1
+```
+#### **Linux**
+Linux users can map the X11 socket directly. No additional software is usually required.
+
+Run:
+```bash
+docker run -it --rm \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix \
+    stockpilot:v1
+```
+#### **Windows (WSL2)**
+Prerequisites:
+
+Install an X Server for Windows (e.g., VcXsrv / XLaunch)
+https://gemini.google.com/app/213740aff72e687c#:~:text=Windows%20(e.g.%2C-,VcXsrv%20/%20XLaunch,-).
+
+Launch XLaunch with the following settings:
+
+- Select "Multiple windows".
+
+- Check "Disable access control".
+
+Run (in WSL2 terminal):
+
+```bash
+# Use the internal Docker host display
+docker run -it --rm -e DISPLAY=host.docker.internal:0 stockpilot:v1
+```
+
+---
 *Project developed as part of a Software Engineering course.*

@@ -1,0 +1,6 @@
+target/
+.bloop/
+.metals/
+.git/
+.idea/
+.DS_Store

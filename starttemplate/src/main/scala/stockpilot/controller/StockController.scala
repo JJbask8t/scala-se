@@ -3,11 +3,12 @@ package stockpilot.controller
 import _root_.stockpilot.model._
 import scala.util.{Try, Success, Failure}
 import java.io.{PrintWriter, File}
+import com.google.inject.{AbstractModule, Guice, Inject}
 
 /** Concrete implementation of the Controller Component. hidden from the outside world
   * (package-private). Access is restricted to the Interface IStockController.
   */
-private[stockpilot] class StockController(repo: IStockRepository, fileIO: FileIO)
+private[stockpilot] class StockController @Inject() (repo: IStockRepository, fileIO: FileIO)
     extends IStockController { // Implements the Component Interface
 
   // keep the current sorting strategy, by default = by ticker

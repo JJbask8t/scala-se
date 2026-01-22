@@ -1,28 +1,37 @@
 package stockpilot
 
-import stockpilot.model._
-import stockpilot.controller.{IStockController, StockController} // Import implementation internally
+import com.google.inject.Guice
+import stockpilot.controller.IStockController
+import stockpilot.model.Stock
 
-/** Component Module: The only place where concrete classes are wired together.
-  */
 object StockModule {
 
-  private val persistence: FileIO = new FileIOJson()
-
-  /** Returns the Component Interface (IStockController), not the class.
+  /** Builds the application using Google Guice Dependency Injection.
     */
   def setupController(initialData: List[Stock] = Nil): IStockController = {
-    // 1. Check if we have saved data
-    val loaded = persistence.load
-    val data   = if (loaded.stocks.nonEmpty) loaded.stocks else initialData
+    // Create the Injector
+    val injector = Guice.createInjector(new StockModuleDI)
 
-    // 2. Wire components (encapsulated)
-    val baseRepo      = new StockRepository(data)
-    val decoratedRepo = new LoggingRepository(baseRepo)
+    // Ask Guice for the Controller instance
+    val controller = injector.getInstance(classOf[IStockController])
 
-    // 3. Return the interface
-    new StockController(decoratedRepo, persistence)
+    // Try to load saved state from file
+    controller.load()
 
+    // If app is empty (fresh start), load default initial data
+    if (controller.allStocks.isEmpty && initialData.nonEmpty) {
+
+      initialData.foreach { s =>
+        controller.addStockFromInput(
+          s.ticker,
+          s.pe.toString,
+          s.eps.toString,
+          s.price.toString,
+          s.quantity.toString
+        )
+      }
+    }
+
+    controller
   }
-
 }

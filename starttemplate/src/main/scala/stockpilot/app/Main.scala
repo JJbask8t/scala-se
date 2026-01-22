@@ -1,68 +1,37 @@
 package stockpilot.app
 
-//import stockpilot.model._
-//import stockpilot.controller.StockController
-import stockpilot.view.{CLIView, GUIView}
 import stockpilot.StockModule
-
-/* // Mock Implementation for Stage 1 (To keep code compilable)
-class MockFileIO extends FileIO {
-  override def load: StockMemento          = {
-    println("Mock load called")
-    StockMemento(Nil)
-  }
-  override def save(m: StockMemento): Unit =
-    println(s"Mock save called with ${m.stocks.size} stocks")
-} */
+import stockpilot.view.{CLIView, GUIView}
+import stockpilot.model.Stock
 
 @main
 def main(): Unit = {
 
-  // ? 1. Option 1: XML
-  // val fileIO = new FileIOXml()
-  // ? 1. Option 2: JSON (Selected)
-  // val fileIO = new FileIOJson()
+  // Default data definition moved here (Clean Code)
+  val defaultStocks = List(
+    Stock("RR.L", 16.64, 0.6852, 798.99, 0),
+    Stock("AAPL", 28.50, 5.5100, 420.33, 10),
+    Stock("GOOGL", 26.80, 110.23, 120.01, 5),
+    Stock("GOOG", 12.01, 0.3000, 98.01, 0)
+  )
 
-  // ! 1. Ask the Module to prepare the main part of the application
-  // ! Main doesn't know about JSON, XML, or Repositories anymore.
-  val controller = StockModule.setupController()
+  // 1. Setup via Guice Module
+  val controller = StockModule.setupController(defaultStocks)
 
-  // ! 2. Load state => NOW IN StockModule.scala
-  /*
-  val loadedMemento = fileIO.load
-  val initialStocks =
-    if (loadedMemento.stocks.nonEmpty) { loadedMemento.stocks }
-    else {
-      // Default data if file is empty or missing
-      List(
-        Stock("RR.L", 16.64, 0.6852, 798.99),
-        Stock("AAPL", 28.50, 5.5100, 420.33),
-        Stock("GOOGL", 26.80, 110.23, 120.01),
-        Stock("GOOG", 12.01, 0.3000, 98.01)
-      )
-    }
-   */
-
-  // 3. Wiring with Dependency Injection
-  // val repo = new LoggingRepository(new StockRepository(initialStocks)) // Wrap in Decorator
-  // val fileIO     = new MockFileIO()        // replaced by FileIO: JSON +- XML
-  // val controller = StockModule.setupController(Nil) // ? new StockController(repo, fileIO)
-
-  // 4. Create Views
+  // 2. Initialize Views
   val tui = new CLIView(controller)
   val gui = new GUIView(controller)
 
-  // 5. Register view observers
   controller.addObserver(tui)
   controller.addObserver(gui)
 
   val eol = sys.props("line.separator")
-  println(eol + "Hey, I'm your SIMPLE StockPilot (CLI mode)!")
-  println("GUI launched. TUI running in console.")
+  println(s"$eol StockPilot initialized via Google Guice DI.")
 
-  // 6. Start text UI
+  // 3. Start
   tui.run()
+
   println("Auto-saving...")
   controller.save()
-  sys.exit(0) // GUI close
+  sys.exit(0)
 }

@@ -5,36 +5,89 @@ import org.scalatest.matchers.should.Matchers
 
 class StockRepositorySpec extends AnyWordSpec with Matchers {
 
-  "StockRepository" should {
-    val s1 = Stock("A", 1, 1, 1)
+  "A StockRepository" when {
+    val s1 = Stock("AAPL", 100.0, 5.0, 150.0, 10.0)
+    val s2 = Stock("GOOG", 200.0, 10.0, 250.0, 5.0)
 
-    "add stock if not present" in {
-      val repo = new StockRepository(Nil)
-      repo.add(s1) shouldBe true
-      repo.all.length shouldBe 1
+    "newly created" should {
+      // 1. Create empty
+      val repo = new StockRepository()
+      // 2. Add data manually for this test case
+      repo.add(s1)
+
+      "contain the initial stocks" in {
+        repo.all should contain(s1)
+        repo.exists("AAPL") shouldBe true
+      }
+
+      "normalize tickers to uppercase" in {
+        repo.exists("aapl") shouldBe true
+        repo.get("aapl") shouldBe Some(s1)
+      }
+
+      "return None for unknown stocks" in {
+        repo.get("UNKNOWN") shouldBe None
+        repo.exists("UNKNOWN") shouldBe false
+      }
     }
 
-    "NOT add stock if already present (Branch Coverage)" in {
-      val repo = new StockRepository(List(s1))
-      repo.add(s1) shouldBe false // This hits the 'else' or 'if exists' branch
-      repo.all.length shouldBe 1
+    "managing stocks" should {
+      "add a new stock correctly" in {
+        val repo = new StockRepository()
+        repo.add(s1) shouldBe true
+        repo.exists("AAPL") shouldBe true
+      }
+
+      "not add a duplicate stock" in {
+        val repo = new StockRepository()
+        repo.add(s1)
+
+        // Try adding again
+        repo.add(s1) shouldBe false
+        repo.all.size shouldBe 1
+      }
+
+      "delete an existing stock" in {
+        val repo = new StockRepository()
+        repo.add(s1)
+
+        repo.delete("AAPL") shouldBe true
+        repo.exists("AAPL") shouldBe false
+      }
+
+      "return false when deleting a non-existent stock" in {
+        val repo = new StockRepository()
+        repo.delete("AAPL") shouldBe false
+      }
     }
 
-    "delete stock if present" in {
-      val repo = new StockRepository(List(s1))
-      repo.delete("A") shouldBe true
-      repo.all shouldBe empty
+    "using Memento pattern" should {
+      "save and restore state" in {
+        val repo = new StockRepository()
+        repo.add(s1)
+
+        // Save state
+        val memento = repo.createMemento()
+
+        // Change state
+        repo.add(s2)
+        repo.exists("GOOG") shouldBe true
+
+        // Restore state
+        repo.setMemento(memento)
+        repo.exists("GOOG") shouldBe false
+        repo.exists("AAPL") shouldBe true
+      }
     }
 
-    "NOT delete stock if missing (Branch Coverage)" in {
-      val repo = new StockRepository(Nil)
-      repo.delete("A") shouldBe false // Hits the 'else' branch
-    }
+    "iterating" should {
+      "allow iteration over stocks" in {
+        val repo = new StockRepository()
+        repo.add(s1)
+        repo.add(s2)
 
-    "handle case-insensitive keys" in {
-      val repo = new StockRepository(List(s1))
-      repo.exists("a") shouldBe true
-      repo.get("a") shouldBe Some(s1)
+        repo.iterator.toList should contain allElementsOf List(s1, s2)
+      }
     }
 
   }

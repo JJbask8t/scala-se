@@ -1,28 +1,23 @@
 package stockpilot.model
 
-//---=== All states are here (Model layer) ===---
+import com.google.inject.{AbstractModule, Guice, Inject}
 
-// Interface
 trait IStockRepository extends Iterable[Stock] {
   def all: List[Stock]
   def exists(ticker: String): Boolean
   def get(ticker: String): Option[Stock]
   def add(stock: Stock): Boolean
   def delete(ticker: String): Boolean
-
   // --- MEMENTO PATTERN ---
   def createMemento(): StockMemento
   def setMemento(m: StockMemento): Unit
 }
 
-// ! implementation is now package-private for the encapsulation
-// ! Access - via the StockModule or defined Factory
-private[stockpilot] class StockRepository(initial: List[Stock]) extends IStockRepository {
+private[stockpilot] class StockRepository @Inject() () extends IStockRepository {
 
-  // Internal map: uppercase ticker -> Stock
-  private var stocks: Map[String, Stock] = initial
-    .map(s => normalizeTicker(s.ticker) -> s.copy(ticker = normalizeTicker(s.ticker)))
-    .toMap
+  // Initialize with empty map, data loading happens via Controller/FileIO
+  private var stocks: Map[String, Stock] = Map.empty
+  // private var stocks: Map[String, Stock] = initial.map(s => normalizeTicker(s.ticker) -> s.copy(ticker = normalizeTicker(s.ticker))).toMap
 
   private def normalizeTicker(t: String): String = t.toUpperCase
 
@@ -57,13 +52,11 @@ private[stockpilot] class StockRepository(initial: List[Stock]) extends IStockRe
     } else { false }
   }
 
-  // --- MEMENTO IMPLEMENTATION ---
-  // Creates a snapshot of the current state
+  // Memento (current state)
   override def createMemento(): StockMemento = StockMemento(all)
 
   // Restores state from a snapshot
   override def setMemento(m: StockMemento): Unit = stocks = m.stocks
-    .map(s => normalizeTicker(s.ticker) -> s.copy(ticker = normalizeTicker(s.ticker)))
-    .toMap
+    .map(s => normalizeTicker(s.ticker) -> s.copy(ticker = normalizeTicker(s.ticker))).toMap
 
 }
